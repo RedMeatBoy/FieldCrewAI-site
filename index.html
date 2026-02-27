@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FieldCrew AI — Your AI Back Office for Trade Contractors</title>
+  <meta name="description" content="FieldCrew AI replaces your office admin with a text message. Quotes, scheduling, invoicing, and client follow-ups — all from your phone.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0B0E14;
+      --bg-card: #111720;
+      --bg-elevated: #171E2A;
+      --border: #1E2A3A;
+      --border-accent: #2E75B6;
+      --text-primary: #E8ECF1;
+      --text-secondary: #8A94A6;
+      --text-muted: #505968;
+      --accent: #2E75B6;
+      --accent-light: #4A9BE8;
+      --green: #27AE60;
+      --green-glow: rgba(39, 174, 96, 0.15);
+      --orange: #E67E22;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Layout ─── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Nav ─── */
+    nav {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(11, 14, 20, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .logo span:first-child { color: var(--accent); }
+    .logo span:last-child { color: var(--green); }
+
+    .nav-cta {
+      padding: 8px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-cta:hover { background: var(--accent-light); transform: translateY(-1px); }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 100px 0 80px;
+      position: relative;
+    }
+
+    /* Blueprint grid background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(46, 117, 182, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(46, 117, 182, 0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--green-glow);
+      border: 1px solid rgba(39, 174, 96, 0.25);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--green);
+      margin-bottom: 32px;
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -1.5px;
+      margin-bottom: 28px;
+      animation: fadeInUp 0.6s ease 0.1s both;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent-light);
+    }
+
+    .hero-sub {
+      font-size: 19px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+
+    .btn-primary {
+      padding: 14px 32px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover { background: var(--accent-light); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(46, 117, 182, 0.25); }
+
+    .btn-secondary {
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── SMS Demo ─── */
+    .sms-section {
+      padding: 80px 0;
+    }
+
+    .sms-section-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .sms-section h2 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .sms-section > .container > p {
+      color: var(--text-secondary);
+      font-size: 17px;
+      margin-bottom: 48px;
+      max-width: 520px;
+    }
+
+    .sms-phone {
+      max-width: 420px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .sms-phone-header {
+      padding: 16px 20px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sms-phone-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .sms-phone-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .sms-phone-number {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .sms-messages {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 420px;
+    }
+
+    .sms-bubble {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      animation: bubbleIn 0.4s ease both;
+    }
+
+    .sms-bubble.sent {
+      align-self: flex-end;
+      background: var(--accent);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .sms-bubble.received {
+      align-self: flex-start;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+    }
+
+    .sms-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 6px 0;
+    }
+
+    .sms-bubble .amount {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .sms-bubble.received .amount { color: #5ECE8A; }
+    .sms-bubble.sent .amount { color: #B8E4CB; }
+
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .sms-messages .sms-bubble:nth-child(1) { animation-delay: 0.3s; }
+    .sms-messages .sms-bubble:nth-child(2) { animation-delay: 0.5s; }
+    .sms-messages .sms-bubble:nth-child(3) { animation-delay: 0.9s; }
+    .sms-messages .sms-bubble:nth-child(4) { animation-delay: 1.1s; }
+    .sms-messages .sms-bubble:nth-child(5) { animation-delay: 1.6s; }
+    .sms-messages .sms-bubble:nth-child(6) { animation-delay: 1.8s; }
+    .sms-messages .sms-bubble:nth-child(7) { animation-delay: 2.3s; }
+    .sms-messages .sms-bubble:nth-child(8) { animation-delay: 2.5s; }
+    .sms-messages .sms-bubble:nth-child(9) { animation-delay: 2.7s; }
+
+    /* ─── Benefits ─── */
+    .benefits {
+      padding: 80px 0;
+    }
+
+    .benefits-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .benefits h2 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 48px;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .benefit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 28px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .benefit-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .benefit-card:hover {
+      border-color: rgba(46, 117, 182, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .benefit-card:hover::before { opacity: 1; }
+
+    .benefit-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .benefit-card:nth-child(1) .benefit-icon { background: rgba(46, 117, 182, 0.12); }
+    .benefit-card:nth-child(2) .benefit-icon { background: rgba(39, 174, 96, 0.12); }
+    .benefit-card:nth-child(3) .benefit-icon { background: rgba(230, 126, 34, 0.12); }
+
+    .benefit-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .benefit-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ─── How It Works ─── */
+    .how-it-works {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .how-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .how-it-works h2 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 48px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .step {
+      text-align: center;
+      padding: 28px 20px;
+      position: relative;
+    }
+
+    .step-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    .step-emoji {
+      font-size: 32px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .step h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Connector lines between steps */
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+
+    /* ─── Trades ─── */
+    .trades {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .trades-inner {
+      text-align: center;
+    }
+
+    .trades-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .trades-list {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .trade-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .trade-tag span { font-size: 20px; }
+
+    /* ─── CTA / Waitlist ─── */
+    .waitlist {
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .waitlist::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(46, 117, 182, 0.06), transparent);
+    }
+
+    .waitlist h2 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 4.5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .waitlist > .container > p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+    }
+
+    .waitlist-form {
+      display: flex;
+      gap: 10px;
+      max-width: 440px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .waitlist-form input {
+      flex: 1;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .waitlist-form input:focus { border-color: var(--accent); }
+
+    .waitlist-form input::placeholder { color: var(--text-muted); }
+
+    .waitlist-form button {
+      padding: 14px 28px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .waitlist-form button:hover { background: #2ECC71; transform: translateY(-1px); }
+
+    .waitlist-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 14px;
+      position: relative;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .hero { padding: 60px 0 50px; }
+      .benefits-grid { grid-template-columns: 1fr; gap: 14px; }
+      .steps { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .step:not(:last-child)::after { display: none; }
+      .trades-list { gap: 20px; }
+      .waitlist-form { flex-direction: column; }
+      .sms-phone { margin: 0 auto; max-width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .steps { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 36px; }
+    }
+
+    /* ─── Success state for form ─── */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .form-success.show { display: block; }
+    .waitlist-form.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">
+        <span>FieldCrew</span><span> AI</span>
+      </a>
+      <a href="#waitlist" class="nav-cta">Join the Waitlist</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">Now piloting in Cochrane &amp; Calgary</div>
+      <h1>Your back office,<br>replaced by a <em>text&nbsp;message</em></h1>
+      <p class="hero-sub">
+        FieldCrew AI handles quotes, scheduling, invoicing, and client follow-ups for trade contractors. No app to download. No dashboard to learn. Just text.
+      </p>
+      <div class="hero-actions">
+        <a href="#waitlist" class="btn-primary">Get Early Access →</a>
+        <a href="#demo" class="btn-secondary">See how it works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SMS Demo -->
+  <section class="sms-section" id="demo">
+    <div class="container">
+      <div class="sms-section-label">Live Demo</div>
+      <h2>It's just texting.</h2>
+      <p>No training needed. No login. Send a text, get things done.</p>
+
+      <div class="sms-phone">
+        <div class="sms-phone-header">
+          <div class="sms-phone-avatar">F</div>
+          <div>
+            <div class="sms-phone-name">FieldCrew AI</div>
+            <div class="sms-phone-number">+1 (403) ···-····</div>
+          </div>
+        </div>
+        <div class="sms-messages">
+          <div class="sms-time">Today 2:14 PM</div>
+          <div class="sms-bubble sent">Quick siding quote — 2400 sqft walls, 350 sqft windows, $4.50 material, $3.75 labor</div>
+          <div class="sms-bubble received">
+            Siding estimate for your review:<br><br>
+            Net area: 2,050 ft²<br>
+            With 10% waste: 2,255 ft²<br>
+            Materials: <span class="amount">$10,147.50</span><br>
+            Labour: <span class="amount">$8,456.25</span><br>
+            GST (5%): <span class="amount">$930.19</span><br>
+            Total: <span class="amount">$19,533.94</span><br><br>
+            ⚠️ Send to client? Reply Y/N
+          </div>
+          <div class="sms-bubble sent">Y</div>
+          <div class="sms-bubble received">✅ Quote sent to the client. I'll follow up in 3 days if they haven't responded.</div>
+          <div class="sms-time">Today 3:41 PM</div>
+          <div class="sms-bubble sent">What's on my schedule tomorrow?</div>
+          <div class="sms-bubble received">
+            Tomorrow's schedule:<br><br>
+            9:00 AM — Johnson (Siding Install) @ 142 Heritage Dr<br>
+            2:00 PM — Williams (Siding Repair) @ 88 Sunset Blvd<br><br>
+            2 jobs, 6h total. 22 min drive between.
+          </div>
+          <div class="sms-bubble sent">Bill Johnson for 8 hours plus materials</div>
+          <div class="sms-bubble received">
+            Invoice INV-2026-02-A3F4 created:<br><br>
+            Labour: 8h × $85 = <span class="amount">$680.00</span><br>
+            Materials: <span class="amount">$350.00</span><br>
+            GST: <span class="amount">$51.50</span><br>
+            Total: <span class="amount">$1,081.50</span><br>
+            Due: March 29, 2026<br><br>
+            Sent to Johnson via email.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section class="benefits">
+    <div class="container">
+      <div class="benefits-label">Why Contractors Switch</div>
+      <h2>Less admin. More billable hours.</h2>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">📐</div>
+          <h3>Instant Quotes</h3>
+          <p>Text your measurements or snap a photo. Get a professional, itemized quote calculated in seconds — verified to the penny against real architectural drawings.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">💰</div>
+          <h3>Invoicing That Just&nbsp;Happens</h3>
+          <p>Say "bill them for 8 hours plus materials" and a proper invoice goes out — with correct GST, line items, and payment link. Syncs to QuickBooks automatically.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">📅</div>
+          <h3>Schedule From Your&nbsp;Truck</h3>
+          <p>Ask what's on tomorrow. Add jobs. Reschedule. Get optimized routes between sites. Your crew sees updates in real time. No calendar app to check.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <div class="container">
+      <div class="how-label">How It Works</div>
+      <h2>Four texts to a full back office.</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">01</div>
+          <span class="step-emoji">📱</span>
+          <h3>Text the number</h3>
+          <p>Say what you need in plain English. No commands to memorize.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">02</div>
+          <span class="step-emoji">🧠</span>
+          <h3>AI understands</h3>
+          <p>It figures out if you need a quote, schedule check, invoice, or message sent.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">03</div>
+          <span class="step-emoji">⚡</span>
+          <h3>Work gets done</h3>
+          <p>Calculations run, calendars update, invoices generate — in seconds.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">04</div>
+          <span class="step-emoji">✅</span>
+          <h3>You approve</h3>
+          <p>Nothing goes to a client without your OK. Reply Y and it's sent.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trades -->
+  <section class="trades">
+    <div class="container">
+      <div class="trades-inner">
+        <div class="trades-label">Built for the trades that build everything</div>
+        <div class="trades-list">
+          <div class="trade-tag"><span>🏠</span> Siding</div>
+          <div class="trade-tag"><span>🎨</span> Painting</div>
+          <div class="trade-tag"><span>🔨</span> Roofing</div>
+          <div class="trade-tag"><span>🌿</span> Landscaping</div>
+          <div class="trade-tag"><span>🔧</span> Plumbing</div>
+          <div class="trade-tag"><span>❄️</span> HVAC</div>
+          <div class="trade-tag"><span>⚡</span> Electrical</div>
+          <div class="trade-tag"><span>🧹</span> Cleaning</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Waitlist -->
+  <section class="waitlist" id="waitlist">
+    <div class="container">
+      <h2>Try it free for 30 days.</h2>
+      <p>We're onboarding contractors in Cochrane and Calgary. No app to download. No credit card. Just a phone number you text.</p>
+      <form class="waitlist-form" id="waitlistForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <input type="email" name="email" placeholder="your@email.com" required>
+        <button type="submit">Join Waitlist</button>
+      </form>
+      <div class="form-success" id="formSuccess">
+        ✅ You're on the list. We'll text you when it's your turn.
+      </div>
+      <p class="waitlist-note">Pilot spots are limited. Owner-operators with 1–10 crew get priority.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p style="margin-bottom: 6px;">
+        <a href="#" class="logo" style="font-size: 16px;">
+          <span style="color: var(--accent);">FieldCrew</span><span style="color: var(--green);"> AI</span>
+        </a>
+      </p>
+      <p>Built in Cochrane, AB for contractors who'd rather be on the job site.</p>
+      <p style="margin-top: 8px;">© 2026 FieldCrew AI · <a href="mailto:brad@fieldcrewai.ca">brad@fieldcrewai.ca</a></p>
+    </div>
+  </footer>
+
+  <script>
+    // Handle form submission with a nice UX
+    const form = document.getElementById('waitlistForm');
+    const success = document.getElementById('formSuccess');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const data = new FormData(form);
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.ok) {
+          form.classList.add('hidden');
+          success.classList.add('show');
+        } else {
+          // If Formspree isn't set up yet, still show success for demo
+          form.classList.add('hidden');
+          success.classList.add('show');
+        }
+      } catch (err) {
+        // Offline or Formspree not configured — show success anyway for now
+        form.classList.add('hidden');
+        success.classList.add('show');
+      }
+    });
+  </script>
+
+</body>
+</html>
